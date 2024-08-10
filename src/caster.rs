@@ -1,9 +1,19 @@
+use image::{DynamicImage, GenericImageView};
 use crate::framebuffer::Framebuffer;
 use crate::player::Player;
 
 pub struct Intersect {
     pub distance: f32,
-    pub impact: char
+    pub impact: char,
+    pub tex_coord: f32, // Add this to track where on the wall the ray hit
+}
+
+pub fn load_textures() -> (DynamicImage, DynamicImage, DynamicImage, DynamicImage) {
+    let texture_plus = image::open("./src/img/BRICK_1A.PNG").unwrap();
+    let texture_minus = image::open("./src/img/BRICK_1A.PNG").unwrap();
+    let texture_pipe = image::open("./src/img/BRICK_1A.PNG").unwrap();
+    let texture_g = image::open("./src/img/BRICK_1A.PNG").unwrap();
+    (texture_plus, texture_minus, texture_pipe, texture_g)
 }
 
 pub fn cast_ray(
@@ -48,9 +58,15 @@ pub fn cast_ray(
         }
 
         if maze[j][i] != ' ' {
-            return Intersect{
+            let tex_coord = if a.cos().abs() > a.sin().abs() {
+                (x % block_size) as f32 / block_size as f32
+            } else {
+                (y % block_size) as f32 / block_size as f32
+            };
+            return Intersect {
                 distance: d,
-                impact: maze[j][i]
+                impact: maze[j][i],
+                tex_coord,
             };
         }
 

@@ -3,7 +3,8 @@ mod framebuffer;
 mod maze;
 mod player;
 
-use crate::caster::cast_ray;
+use image::{DynamicImage, GenericImageView};
+use crate::caster::{cast_ray, load_textures};
 use crate::framebuffer::Framebuffer;
 use crate::maze::load_maze;
 use crate::player::Player;
@@ -43,30 +44,40 @@ fn render3d(framebuffer: &mut Framebuffer, player: &Player) {
     let maze = load_maze("./maze.txt");
     let block_size = 50;
     let num_rays = framebuffer.width;
+    let (texture_plus, texture_minus, texture_pipe, texture_g) = load_textures();
 
-    let hw = framebuffer.width as f32 / 2.0; // precalculated half width
-    let hh = framebuffer.height as f32 / 2.0; // precalculated half height
-
-    framebuffer.set_current_color(0xFFFFFF);
+    let hw = framebuffer.width as f32 / 2.0;
+    let hh = framebuffer.height as f32 / 2.0;
 
     for i in 0..num_rays {
-        let current_ray = i as f32 / num_rays as f32; // current ray divided by total rays
+        let current_ray = i as f32 / num_rays as f32;
         let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
         let intersect = cast_ray(framebuffer, &maze, &player, a, block_size, false);
 
-        // Calculate the height of the stake
-        let distance_to_wall = intersect.distance; // how far is this wall from the player
-        let distance_to_projection_plane = 100.0; // how far is the "player" from the "camera"
-                                                  // this ratio doesn't really matter as long as it is a function of distance
+        let distance_to_wall = intersect.distance;
+        let distance_to_projection_plane = 100.0;
         let stake_height = (hh / distance_to_wall) * distance_to_projection_plane;
 
-        // Calculate the position to draw the stake
         let stake_top = (hh - (stake_height / 2.0)) as usize;
         let stake_bottom = (hh + (stake_height / 2.0)) as usize;
 
-        // Draw the stake directly in the framebuffer
+        let texture = match intersect.impact {
+            '+' => &texture_plus,
+            '-' => &texture_minus,
+            '|' => &texture_pipe,
+            'g' => &texture_g,
+            _ => continue,
+        };
+
+        // Texture sampling
         for y in stake_top..stake_bottom {
-            framebuffer.point(i, y); // Assuming white color for the stake
+            let tex_y = ((y - stake_top) as f32 / stake_height) * texture.height() as f32;
+            let color = texture.get_pixel(
+                (intersect.tex_coord * texture.width() as f32) as u32,
+                tex_y as u32,
+            );
+            framebuffer.set_current_color((color[0] as u32) << 16 | (color[1] as u32) << 8 | color[2] as u32);
+            framebuffer.point(i, y);
         }
     }
 }
