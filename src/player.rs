@@ -20,9 +20,9 @@ impl Player {
         }
     }
 
-    pub fn process_events(&mut self, window: &Window) {
+    pub fn process_events(&mut self, window: &Window, maze: &Vec<Vec<char>>, block_size: usize) {
         const ROTATION_SPEED: f32 = std::f32::consts::PI / 17.0;
-    
+
         // Rotate left
         if window.is_key_down(Key::A) {
             self.a -= ROTATION_SPEED;
@@ -40,16 +40,35 @@ impl Player {
             self.move_speed
         };
 
-        // Move forward
+        // Calculate the new position based on current direction and speed
+        let new_x = self.pos.x + self.a.cos() * speed;
+        let new_y = self.pos.y + self.a.sin() * speed;
+
+        // Calculate the cell indices for the new position
+        let new_i = (new_x / block_size as f32) as usize;
+        let new_j = (new_y / block_size as f32) as usize;
+
+        // Check for collisions with walls
         if window.is_key_down(Key::W) {
-            self.pos.x += self.a.cos() * speed;
-            self.pos.y += self.a.sin() * speed;
+            if maze[new_j][new_i] != ' ' {
+                // If there's a wall, don't update the position
+                return;
+            }
+            self.pos.x = new_x;
+            self.pos.y = new_y;
         }
-        
-        // Move backward
+
+        // Check for moving backward
         if window.is_key_down(Key::S) {
-            self.pos.x -= self.a.cos() * speed;
-            self.pos.y -= self.a.sin() * speed;
+            let new_x = self.pos.x - self.a.cos() * speed;
+            let new_y = self.pos.y - self.a.sin() * speed;
+            let new_i = (new_x / block_size as f32) as usize;
+            let new_j = (new_y / block_size as f32) as usize;
+            if maze[new_j][new_i] != ' ' {
+                return;
+            }
+            self.pos.x = new_x;
+            self.pos.y = new_y;
         }
     }
 }

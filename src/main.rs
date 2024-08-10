@@ -3,11 +3,11 @@ mod framebuffer;
 mod maze;
 mod player;
 
-use image::{DynamicImage, GenericImageView};
 use crate::caster::{cast_ray, load_textures};
 use crate::framebuffer::Framebuffer;
 use crate::maze::load_maze;
 use crate::player::Player;
+use image::{DynamicImage, GenericImageView};
 use minifb::{Key, Window, WindowOptions};
 use nalgebra_glm::Vec2;
 use std::time::Duration;
@@ -40,9 +40,8 @@ fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: us
     }
 }
 
-fn render3d(framebuffer: &mut Framebuffer, player: &Player) {
-    let maze = load_maze("./maze.txt");
-    let block_size = 50;
+fn render3d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize) {
+    
     let num_rays = framebuffer.width;
     let (texture_plus, texture_minus, texture_pipe, texture_g) = load_textures();
 
@@ -56,7 +55,7 @@ fn render3d(framebuffer: &mut Framebuffer, player: &Player) {
 
         let distance_to_wall = intersect.distance;
         let distance_to_projection_plane = 100.0;
-        let stake_height = (hh / distance_to_wall) * distance_to_projection_plane;
+        let stake_height = (block_size as f32 * distance_to_projection_plane) / distance_to_wall;
 
         let stake_top = (hh - (stake_height / 2.0)) as usize;
         let stake_bottom = (hh + (stake_height / 2.0)) as usize;
@@ -71,7 +70,7 @@ fn render3d(framebuffer: &mut Framebuffer, player: &Player) {
 
         // Texture sampling
         for y in stake_top..stake_bottom {
-            let tex_y = ((y - stake_top) as f32 / stake_height) * texture.height() as f32;
+            let tex_y = ((y as f32 - stake_top as f32) / stake_height) * texture.height() as f32;
             let color = texture.get_pixel(
                 (intersect.tex_coord * texture.width() as f32) as u32,
                 tex_y as u32,
@@ -82,9 +81,8 @@ fn render3d(framebuffer: &mut Framebuffer, player: &Player) {
     }
 }
 
-fn render2d(framebuffer: &mut Framebuffer, player: &Player) {
-    let maze = load_maze("./maze.txt");
-    let block_size = 50;
+
+fn render2d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize) {
 
     // draws maze
     for row in 0..maze.len() {
@@ -119,6 +117,8 @@ fn main() {
     let window_height = 450;
     let framebuffer_width = 650;
     let framebuffer_height = 450;
+    let maze = load_maze("./maze.txt");
+    let block_size = 50;
     let frame_delay = Duration::from_millis(16);
 
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
@@ -149,14 +149,14 @@ fn main() {
             mode = if mode == "2D" { "3D" } else { "2D" };
         }
 
-        player.process_events(&window);
+        player.process_events(&window, &maze, block_size);
 
         framebuffer.clear();
 
         if mode == "2D" {
-            render2d(&mut framebuffer, &player);
+            render2d(&mut framebuffer, &player, &maze, block_size);
         } else {
-            render3d(&mut framebuffer, &player)
+            render3d(&mut framebuffer, &player, &maze, block_size)
         }
 
         window

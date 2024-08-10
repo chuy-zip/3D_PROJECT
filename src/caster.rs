@@ -36,22 +36,6 @@ pub fn cast_ray(
 
         let i = x / block_size;
         let j = y / block_size;
-    
-        if maze[j][i] == '+' {
-            framebuffer.set_current_color(0x011f4b);
-        }
-    
-        if maze[j][i] == '-' {
-            framebuffer.set_current_color(0x005b96);
-        }
-    
-        if maze[j][i] == '|' {
-            framebuffer.set_current_color(0xb3cde0);
-        }
-    
-        if maze[j][i] == 'g' {
-            framebuffer.set_current_color(0xffffff);
-        }
 
         if draw_line {
             framebuffer.point(x, y);
@@ -70,6 +54,6 @@ pub fn cast_ray(
             };
         }
 
-        d += 10.0;
+        d += 1.0;
     }
 }
