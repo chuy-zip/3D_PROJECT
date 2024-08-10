@@ -1,24 +1,36 @@
-
+mod caster;
 mod framebuffer;
 mod maze;
 mod player;
-mod caster;
 
-use minifb::{ Window, WindowOptions, Key };
-use nalgebra_glm::Vec2;
-use std::time::Duration;
+use crate::caster::cast_ray;
 use crate::framebuffer::Framebuffer;
 use crate::maze::load_maze;
 use crate::player::Player;
-use crate::caster::cast_ray;
-
+use minifb::{Key, Window, WindowOptions};
+use nalgebra_glm::Vec2;
+use std::time::Duration;
 
 fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: usize, cell: char) {
     if cell == ' ' {
         return;
     }
 
-    framebuffer.set_current_color(0xFFDDDD);
+    if cell == '+' {
+        framebuffer.set_current_color(0x011f4b);
+    }
+
+    if cell == '-' {
+        framebuffer.set_current_color(0x005b96);
+    }
+
+    if cell == '|' {
+        framebuffer.set_current_color(0xb3cde0);
+    }
+
+    if cell == 'g' {
+        framebuffer.set_current_color(0xffffff);
+    }
 
     for x in xo..xo + block_size {
         for y in yo..yo + block_size {
@@ -29,11 +41,11 @@ fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: us
 
 fn render3d(framebuffer: &mut Framebuffer, player: &Player) {
     let maze = load_maze("./maze.txt");
-    let block_size = 100;
+    let block_size = 50;
     let num_rays = framebuffer.width;
 
-    let hw = framebuffer.width as f32 / 2.0;    // precalculated half width
-    let hh = framebuffer.height as f32 / 2.0;   // precalculated half height
+    let hw = framebuffer.width as f32 / 2.0; // precalculated half width
+    let hh = framebuffer.height as f32 / 2.0; // precalculated half height
 
     framebuffer.set_current_color(0xFFFFFF);
 
@@ -43,9 +55,9 @@ fn render3d(framebuffer: &mut Framebuffer, player: &Player) {
         let intersect = cast_ray(framebuffer, &maze, &player, a, block_size, false);
 
         // Calculate the height of the stake
-        let distance_to_wall = intersect.distance;// how far is this wall from the player
+        let distance_to_wall = intersect.distance; // how far is this wall from the player
         let distance_to_projection_plane = 100.0; // how far is the "player" from the "camera"
-        // this ratio doesn't really matter as long as it is a function of distance
+                                                  // this ratio doesn't really matter as long as it is a function of distance
         let stake_height = (hh / distance_to_wall) * distance_to_projection_plane;
 
         // Calculate the position to draw the stake
@@ -61,12 +73,18 @@ fn render3d(framebuffer: &mut Framebuffer, player: &Player) {
 
 fn render2d(framebuffer: &mut Framebuffer, player: &Player) {
     let maze = load_maze("./maze.txt");
-    let block_size = 100;
+    let block_size = 50;
 
     // draws maze
     for row in 0..maze.len() {
         for col in 0..maze[row].len() {
-            draw_cell(framebuffer, col * block_size, row * block_size, block_size, maze[row][col])
+            draw_cell(
+                framebuffer,
+                col * block_size,
+                row * block_size,
+                block_size,
+                maze[row][col],
+            )
         }
     }
 
@@ -86,10 +104,10 @@ fn render2d(framebuffer: &mut Framebuffer, player: &Player) {
 }
 
 fn main() {
-    let window_width = 1300;
-    let window_height = 900;
-    let framebuffer_width = 1300;
-    let framebuffer_height = 900;
+    let window_width = 650;
+    let window_height = 450;
+    let framebuffer_width = 650;
+    let framebuffer_height = 450;
     let frame_delay = Duration::from_millis(16);
 
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
@@ -99,27 +117,31 @@ fn main() {
         window_width,
         window_height,
         WindowOptions::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     framebuffer.set_background_color(0x333355);
 
-    let mut player = Player::new(Vec2::new(150.0, 150.0), std::f32::consts::PI / 3.0, std::f32::consts::PI / 3.0);
+    let mut player = Player::new(
+        Vec2::new(150.0, 150.0),
+        std::f32::consts::PI / 3.0,
+        std::f32::consts::PI / 3.0,
+    );
 
     let mut mode = "2D";
 
     while window.is_open() {
-
-        if window.is_key_down(Key::Escape){
+        if window.is_key_down(Key::Escape) {
             break;
         }
-        if window.is_key_down(Key::M){
+        if window.is_key_down(Key::M) {
             mode = if mode == "2D" { "3D" } else { "2D" };
         }
 
         player.process_events(&window);
 
         framebuffer.clear();
-        
+
         if mode == "2D" {
             render2d(&mut framebuffer, &player);
         } else {
