@@ -16,7 +16,7 @@ pub fn cast_ray(
 ) -> Intersect {
     let mut d = 0.0;
 
-    framebuffer.set_current_color(0xFFDDDD);
+    framebuffer.set_current_color(0xFFFFFF);
 
     loop {
         let cos = d * a.cos();
@@ -26,16 +26,32 @@ pub fn cast_ray(
 
         let i = x / block_size;
         let j = y / block_size;
+    
+        if maze[j][i] == '+' {
+            framebuffer.set_current_color(0x011f4b);
+        }
+    
+        if maze[j][i] == '-' {
+            framebuffer.set_current_color(0x005b96);
+        }
+    
+        if maze[j][i] == '|' {
+            framebuffer.set_current_color(0xb3cde0);
+        }
+    
+        if maze[j][i] == 'g' {
+            framebuffer.set_current_color(0xffffff);
+        }
+
+        if draw_line {
+            framebuffer.point(x, y);
+        }
 
         if maze[j][i] != ' ' {
             return Intersect{
                 distance: d,
                 impact: maze[j][i]
             };
-        }
-
-        if draw_line {
-            framebuffer.point(x, y);
         }
 
         d += 10.0;

@@ -123,7 +123,7 @@ fn main() {
     framebuffer.set_background_color(0x333355);
 
     let mut player = Player::new(
-        Vec2::new(150.0, 150.0),
+        Vec2::new(75.0, 75.0),
         std::f32::consts::PI / 3.0,
         std::f32::consts::PI / 3.0,
     );
