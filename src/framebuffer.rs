@@ -37,4 +37,19 @@ impl Framebuffer {
     pub fn set_current_color(&mut self, color: u32) {
         self.current_color = color;
     }
+    pub fn draw_floor_and_ceiling(&mut self, ceiling_color: u32, floor_color: u32) {
+        // Color para el techo
+        for y in 0..self.height / 2 {
+            for x in 0..self.width {
+                self.buffer[y * self.width + x] = ceiling_color;
+            }
+        }
+
+        // Color para el piso
+        for y in self.height / 2..self.height {
+            for x in 0..self.width {
+                self.buffer[y * self.width + x] = floor_color;
+            }
+        }
+    }
 }

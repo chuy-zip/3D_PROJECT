@@ -42,6 +42,7 @@ fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: us
 
 fn render3d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize) {
     
+    framebuffer.draw_floor_and_ceiling(0x402905, 0xb69f66);
     let num_rays = framebuffer.width;
     let (texture_plus, texture_minus, texture_pipe, texture_g) = load_textures();
 
@@ -55,7 +56,7 @@ fn render3d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>
 
         let distance_to_wall = intersect.distance;
         let distance_to_projection_plane = 100.0;
-        let stake_height = (block_size as f32 * distance_to_projection_plane) / distance_to_wall;
+        let stake_height = (hh / distance_to_wall) * distance_to_projection_plane;
 
         let stake_top = (hh - (stake_height / 2.0)) as usize;
         let stake_bottom = (hh + (stake_height / 2.0)) as usize;
@@ -131,7 +132,7 @@ fn main() {
     )
     .unwrap();
 
-    framebuffer.set_background_color(0x333355);
+    framebuffer.set_background_color(0xb69f66);
 
     let mut player = Player::new(
         Vec2::new(75.0, 75.0),
