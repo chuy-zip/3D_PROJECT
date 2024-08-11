@@ -1,4 +1,17 @@
 
+const FONT: [[u8; 5]; 10] = [
+    [0b01110, 0b10001, 0b10001, 0b10001, 0b01110], // 0
+    [0b00100, 0b01100, 0b00100, 0b00100, 0b01110], // 1
+    [0b01110, 0b10001, 0b00110, 0b01000, 0b11111], // 2
+    [0b11110, 0b00101, 0b01110, 0b00101, 0b11110], // 3
+    [0b00100, 0b01100, 0b10100, 0b11111, 0b00100], // 4
+    [0b11111, 0b10000, 0b11110, 0b00001, 0b11110], // 5
+    [0b01110, 0b10000, 0b11110, 0b10001, 0b01110], // 6
+    [0b11111, 0b00001, 0b00010, 0b00100, 0b01000], // 7
+    [0b01110, 0b10001, 0b01110, 0b10001, 0b01110], // 8
+    [0b01110, 0b10001, 0b01111, 0b00001, 0b01110], // 9
+];
+
 pub struct Framebuffer {
     pub width: usize,
     pub height: usize,
@@ -14,7 +27,7 @@ impl Framebuffer {
             height,
             buffer: vec![0; width * height],
             background_color: 0x000000,
-            current_color: 0xFFFFFF
+            current_color: 0xFFFFFF,
         }
     }
 
@@ -52,4 +65,24 @@ impl Framebuffer {
             }
         }
     }
+
+    pub fn draw_char(&mut self, x: usize, y: usize, ch: char) {
+        if let Some(digit) = ch.to_digit(10) {
+            let pattern = FONT[digit as usize];
+            for (row, bits) in pattern.iter().enumerate() {
+                for col in 0..5 {
+                    if bits & (1 << (4 - col)) != 0 {
+                        self.point(x + col, y + row);
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn draw_text(&mut self, x: usize, y: usize, text: &str) {
+        for (i, ch) in text.chars().enumerate() {
+            self.draw_char(x + i * 6, y, ch);
+        }
+    }
+    
 }

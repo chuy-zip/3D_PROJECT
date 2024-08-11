@@ -3,6 +3,7 @@ mod framebuffer;
 mod maze;
 mod player;
 
+use std::time::{Duration, Instant};
 use crate::caster::{cast_ray, load_textures};
 use crate::framebuffer::Framebuffer;
 use crate::maze::load_maze;
@@ -10,7 +11,6 @@ use crate::player::Player;
 use image::{DynamicImage, GenericImageView};
 use minifb::{Key, Window, WindowOptions};
 use nalgebra_glm::Vec2;
-use std::time::Duration;
 
 fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: usize, cell: char) {
     if cell == ' ' {
@@ -40,8 +40,28 @@ fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: us
     }
 }
 
-fn render3d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize) {
-    
+fn interpolate_color(start: u32, end: u32, t: f32) -> u32 {
+    let sr = (start >> 16) & 0xFF;
+    let sg = (start >> 8) & 0xFF;
+    let sb = start & 0xFF;
+
+    let er = (end >> 16) & 0xFF;
+    let eg = (end >> 8) & 0xFF;
+    let eb = end & 0xFF;
+
+    let r = sr as f32 + (er as f32 - sr as f32) * t;
+    let g = sg as f32 + (eg as f32 - sg as f32) * t;
+    let b = sb as f32 + (eb as f32 - sb as f32) * t;
+
+    ((r as u32) << 16) | ((g as u32) << 8) | (b as u32)
+}
+
+fn render3d(
+    framebuffer: &mut Framebuffer,
+    player: &Player,
+    maze: &Vec<Vec<char>>,
+    block_size: usize,
+) {
     framebuffer.draw_floor_and_ceiling(0x402905, 0xb69f66);
     let num_rays = framebuffer.width;
     let (texture_plus, texture_minus, texture_pipe, texture_g) = load_textures();
@@ -49,6 +69,23 @@ fn render3d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>
     let hw = framebuffer.width as f32 / 2.0;
     let hh = framebuffer.height as f32 / 2.0;
 
+    // Dibujar el degradado en el techo y el piso primero
+    for y in 0..hh as usize {
+        let distance_ratio = y as f32 / hh;
+        let ceiling_color = interpolate_color(0x402905, 0x000000, distance_ratio);
+        framebuffer.set_current_color(ceiling_color);
+        for i in 0..framebuffer.width {
+            framebuffer.point(i, y);
+        }
+
+        let floor_color = interpolate_color(0xb69f66, 0x000000, distance_ratio);
+        framebuffer.set_current_color(floor_color);
+        for i in 0..framebuffer.width {
+            framebuffer.point(i, framebuffer.height - y - 1); // Asegúrate de no exceder los límites
+        }
+    }
+
+    // Luego renderizar las paredes
     for i in 0..num_rays {
         let current_ray = i as f32 / num_rays as f32;
         let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
@@ -69,22 +106,27 @@ fn render3d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>
             _ => continue,
         };
 
-        // Texture sampling
+        // Renderizar las texturas de las paredes
         for y in stake_top..stake_bottom {
             let tex_y = ((y as f32 - stake_top as f32) / stake_height) * texture.height() as f32;
             let color = texture.get_pixel(
                 (intersect.tex_coord * texture.width() as f32) as u32,
                 tex_y as u32,
             );
-            framebuffer.set_current_color((color[0] as u32) << 16 | (color[1] as u32) << 8 | color[2] as u32);
+            framebuffer.set_current_color(
+                (color[0] as u32) << 16 | (color[1] as u32) << 8 | color[2] as u32,
+            );
             framebuffer.point(i, y);
         }
     }
 }
 
-
-fn render2d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize) {
-
+fn render2d(
+    framebuffer: &mut Framebuffer,
+    player: &Player,
+    maze: &Vec<Vec<char>>,
+    block_size: usize,
+) {
     // draws maze
     for row in 0..maze.len() {
         for col in 0..maze[row].len() {
@@ -121,6 +163,10 @@ fn main() {
     let maze = load_maze("./maze.txt");
     let block_size = 50;
     let frame_delay = Duration::from_millis(16);
+
+    let mut last_frame_time = std::time::Instant::now();
+    let mut fps_counter = 0;
+    let mut current_fps = 0;
 
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
 
@@ -159,6 +205,16 @@ fn main() {
         } else {
             render3d(&mut framebuffer, &player, &maze, block_size)
         }
+
+        fps_counter += 1;
+        if last_frame_time.elapsed() >= Duration::from_secs(1) {
+            current_fps = fps_counter;
+            fps_counter = 0;
+            last_frame_time = std::time::Instant::now();
+        }
+
+        framebuffer.set_current_color(0xFFFFFF); // Establece el color blanco para el texto
+        framebuffer.draw_text(10, 10, &format!("FPS: {}", current_fps)); // Dibuja los FPS
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
