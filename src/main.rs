@@ -8,7 +8,7 @@ use crate::caster::{cast_ray, load_textures};
 use crate::framebuffer::Framebuffer;
 use crate::maze::load_maze;
 use crate::player::Player;
-use image::{DynamicImage, GenericImageView};
+use image::{DynamicImage, GenericImageView, Rgba};
 use minifb::{Key, Window, WindowOptions};
 use nalgebra_glm::Vec2;
 
@@ -42,7 +42,7 @@ fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: us
 
 fn interpolate_color(start: u32, end: u32, t: f32) -> u32 {
     // Usa un exponente mayor para un cambio más fuerte hacia el color final.
-    let t = t.powf(0.3); // Puedes ajustar el exponente para obtener el efecto deseado.
+    let t = t.powf(0.2); // Puedes ajustar el exponente para obtener el efecto deseado.
 
     let sr = (start >> 16) & 0xFF;
     let sg = (start >> 8) & 0xFF;
@@ -67,15 +67,14 @@ fn render3d(
     maze: &Vec<Vec<char>>,
     block_size: usize,
 ) {
-    let max_distance = 150.0; // distancia máxima que el jugador puede ver
-    framebuffer.draw_floor_and_ceiling(0x402905, 0xb69f66);
     let num_rays = framebuffer.width;
     let (texture_plus, texture_minus, texture_pipe, texture_g) = load_textures();
 
     let hw = framebuffer.width as f32 / 2.0;
     let hh = framebuffer.height as f32 / 2.0;
+    let max_distance = 100.0; // Ajusta esto según tu necesidad
 
-    // Dibujar el degradado en el techo y el piso primero
+    // Dibujar el degradado en el techo y el piso
     for y in 0..hh as usize {
         let distance_ratio = y as f32 / hh;
         let ceiling_color = interpolate_color(0x402905, 0x000000, distance_ratio);
@@ -87,11 +86,10 @@ fn render3d(
         let floor_color = interpolate_color(0xb69f66, 0x000000, distance_ratio);
         framebuffer.set_current_color(floor_color);
         for i in 0..framebuffer.width {
-            framebuffer.point(i, framebuffer.height - y - 1);
+            framebuffer.point(i, framebuffer.height - y - 1); // Asegúrate de no exceder los límites
         }
     }
 
-    // Luego renderizar las paredes
     for i in 0..num_rays {
         let current_ray = i as f32 / num_rays as f32;
         let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
@@ -104,41 +102,45 @@ fn render3d(
         let stake_top = (hh - (stake_height / 2.0)) as usize;
         let stake_bottom = (hh + (stake_height / 2.0)) as usize;
 
-        // Si la distancia a la pared es mayor que la distancia máxima, usar color negro
-        if distance_to_wall > max_distance {
-            framebuffer.set_current_color(0x000000); // Color negro
-        } else {
-            let texture = match intersect.impact {
-                '+' => &texture_plus,
-                '-' => &texture_minus,
-                '|' => &texture_pipe,
-                'g' => &texture_g,
-                _ => continue,
-            };
+        let texture = match intersect.impact {
+            '+' => &texture_plus,
+            '-' => &texture_minus,
+            '|' => &texture_pipe,
+            'g' => &texture_g,
+            _ => continue,
+        };
 
-            // Renderizar las texturas de las paredes
-            for y in stake_top..stake_bottom {
-                let tex_y = ((y as f32 - stake_top as f32) / stake_height) * texture.height() as f32;
-                let color = texture.get_pixel(
-                    (intersect.tex_coord * texture.width() as f32) as u32,
-                    tex_y as u32,
-                );
-                framebuffer.set_current_color(
-                    (color[0] as u32) << 16 | (color[1] as u32) << 8 | color[2] as u32,
-                );
-                framebuffer.point(i, y);
-            }
-            continue;
-        }
-
-        // Si se está usando el color negro, dibujar el stake completo en negro
         for y in stake_top..stake_bottom {
+            let tex_y = ((y as f32 - stake_top as f32) / stake_height) * texture.height() as f32;
+            let color = texture.get_pixel(
+                (intersect.tex_coord * texture.width() as f32) as u32,
+                tex_y as u32,
+            );
+            
+            // Calcular la opacidad en función de la distancia
+            let opacity = (1.0 - (distance_to_wall / max_distance)).clamp(0.0, 1.0);
+            let blended_color = blend_color_with_opacity(color, opacity);
+            
+            framebuffer.set_current_color(
+                (blended_color[0] as u32) << 16 | (blended_color[1] as u32) << 8 | blended_color[2] as u32,
+            );
             framebuffer.point(i, y);
         }
     }
 }
 
+fn blend_color_with_opacity(color: Rgba<u8>, opacity: f32) -> Rgba<u8> {
+    // Color negro
+    let black = Rgba([0, 0, 0, 0]);
 
+    // Mezclar el color con el negro basado en la opacidad
+    Rgba([
+        ((color[0] as f32 * opacity + black[0] as f32 * (1.0 - opacity)) as u8),
+        ((color[1] as f32 * opacity + black[1] as f32 * (1.0 - opacity)) as u8),
+        ((color[2] as f32 * opacity + black[2] as f32 * (1.0 - opacity)) as u8),
+        color[3], // Mantener el canal alfa del color original
+    ])
+}
 
 fn render2d(
     framebuffer: &mut Framebuffer,
