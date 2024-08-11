@@ -41,6 +41,9 @@ fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: us
 }
 
 fn interpolate_color(start: u32, end: u32, t: f32) -> u32 {
+    // Usa un exponente mayor para un cambio más fuerte hacia el color final.
+    let t = t.powf(0.3); // Puedes ajustar el exponente para obtener el efecto deseado.
+
     let sr = (start >> 16) & 0xFF;
     let sg = (start >> 8) & 0xFF;
     let sb = start & 0xFF;
@@ -56,12 +59,15 @@ fn interpolate_color(start: u32, end: u32, t: f32) -> u32 {
     ((r as u32) << 16) | ((g as u32) << 8) | (b as u32)
 }
 
+
+
 fn render3d(
     framebuffer: &mut Framebuffer,
     player: &Player,
     maze: &Vec<Vec<char>>,
     block_size: usize,
 ) {
+    let max_distance = 150.0; // distancia máxima que el jugador puede ver
     framebuffer.draw_floor_and_ceiling(0x402905, 0xb69f66);
     let num_rays = framebuffer.width;
     let (texture_plus, texture_minus, texture_pipe, texture_g) = load_textures();
@@ -81,7 +87,7 @@ fn render3d(
         let floor_color = interpolate_color(0xb69f66, 0x000000, distance_ratio);
         framebuffer.set_current_color(floor_color);
         for i in 0..framebuffer.width {
-            framebuffer.point(i, framebuffer.height - y - 1); // Asegúrate de no exceder los límites
+            framebuffer.point(i, framebuffer.height - y - 1);
         }
     }
 
@@ -98,28 +104,41 @@ fn render3d(
         let stake_top = (hh - (stake_height / 2.0)) as usize;
         let stake_bottom = (hh + (stake_height / 2.0)) as usize;
 
-        let texture = match intersect.impact {
-            '+' => &texture_plus,
-            '-' => &texture_minus,
-            '|' => &texture_pipe,
-            'g' => &texture_g,
-            _ => continue,
-        };
+        // Si la distancia a la pared es mayor que la distancia máxima, usar color negro
+        if distance_to_wall > max_distance {
+            framebuffer.set_current_color(0x000000); // Color negro
+        } else {
+            let texture = match intersect.impact {
+                '+' => &texture_plus,
+                '-' => &texture_minus,
+                '|' => &texture_pipe,
+                'g' => &texture_g,
+                _ => continue,
+            };
 
-        // Renderizar las texturas de las paredes
+            // Renderizar las texturas de las paredes
+            for y in stake_top..stake_bottom {
+                let tex_y = ((y as f32 - stake_top as f32) / stake_height) * texture.height() as f32;
+                let color = texture.get_pixel(
+                    (intersect.tex_coord * texture.width() as f32) as u32,
+                    tex_y as u32,
+                );
+                framebuffer.set_current_color(
+                    (color[0] as u32) << 16 | (color[1] as u32) << 8 | color[2] as u32,
+                );
+                framebuffer.point(i, y);
+            }
+            continue;
+        }
+
+        // Si se está usando el color negro, dibujar el stake completo en negro
         for y in stake_top..stake_bottom {
-            let tex_y = ((y as f32 - stake_top as f32) / stake_height) * texture.height() as f32;
-            let color = texture.get_pixel(
-                (intersect.tex_coord * texture.width() as f32) as u32,
-                tex_y as u32,
-            );
-            framebuffer.set_current_color(
-                (color[0] as u32) << 16 | (color[1] as u32) << 8 | color[2] as u32,
-            );
             framebuffer.point(i, y);
         }
     }
 }
+
+
 
 fn render2d(
     framebuffer: &mut Framebuffer,
