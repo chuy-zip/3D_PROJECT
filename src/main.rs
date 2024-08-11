@@ -42,7 +42,7 @@ fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: us
 
 fn interpolate_color(start: u32, end: u32, t: f32) -> u32 {
     // Usa un exponente mayor para un cambio más fuerte hacia el color final.
-    let t = t.powf(0.2); // Puedes ajustar el exponente para obtener el efecto deseado.
+    let t = t.powf(0.4); // Puedes ajustar el exponente para obtener el efecto deseado.
 
     let sr = (start >> 16) & 0xFF;
     let sg = (start >> 8) & 0xFF;
@@ -72,7 +72,7 @@ fn render3d(
 
     let hw = framebuffer.width as f32 / 2.0;
     let hh = framebuffer.height as f32 / 2.0;
-    let max_distance = 100.0; // Ajusta esto según tu necesidad
+    let max_distance = 120.0; // Ajusta esto según tu necesidad
 
     // Dibujar el degradado en el techo y el piso
     for y in 0..hh as usize {
@@ -83,7 +83,7 @@ fn render3d(
             framebuffer.point(i, y);
         }
 
-        let floor_color = interpolate_color(0xb69f66, 0x000000, distance_ratio);
+        let floor_color = interpolate_color(0x6b5428, 0x000000, distance_ratio);
         framebuffer.set_current_color(floor_color);
         for i in 0..framebuffer.width {
             framebuffer.point(i, framebuffer.height - y - 1); // Asegúrate de no exceder los límites
@@ -195,7 +195,10 @@ fn main() {
         "Maze Runner",
         window_width,
         window_height,
-        WindowOptions::default(),
+        WindowOptions {
+            resize: false,
+            ..WindowOptions::default()
+        },
     )
     .unwrap();
 
