@@ -9,7 +9,7 @@ use crate::framebuffer::Framebuffer;
 use crate::maze::load_maze;
 use crate::player::Player;
 use image::{DynamicImage, GenericImageView, Rgba};
-use minifb::{Key, Window, WindowOptions};
+use minifb::{Key, Window, WindowOptions, Scale};
 use nalgebra_glm::Vec2;
 
 fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: usize, cell: char) {
@@ -177,8 +177,8 @@ fn render2d(
 }
 
 fn main() {
-    let window_width = 650;
-    let window_height = 450;
+    let window_width = 1080;
+    let window_height = 720;
     let framebuffer_width = 650;
     let framebuffer_height = 450;
     let maze = load_maze("./maze.txt");
@@ -197,6 +197,7 @@ fn main() {
         window_height,
         WindowOptions {
             resize: false,
+            scale: Scale::FitScreen,
             ..WindowOptions::default()
         },
     )
@@ -211,6 +212,9 @@ fn main() {
     );
 
     let mut mode = "2D";
+
+    window.set_position(0, 0);
+    window.set_cursor_visibility(true);
 
     while window.is_open() {
         if window.is_key_down(Key::Escape) {
