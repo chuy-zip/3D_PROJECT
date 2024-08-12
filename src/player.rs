@@ -7,7 +7,7 @@ pub struct Player {
     pub fov: f32, // campo de vista
     pub move_speed: f32,
     pub run_multiplier: f32,
-    pub last_mouse_x: Option<f32>,
+    pub mouse_control: bool,
 }
 
 impl Player {
@@ -18,33 +18,35 @@ impl Player {
             fov,
             move_speed: 5.0, // valor por defecto
             run_multiplier: 3.0, // valor por defecto para la velocidad al correr
-            last_mouse_x: None, // Inicializa como None
+            mouse_control: false, // Inicializa como None
         }
     }
 
     pub fn process_events(&mut self, window: &Window, maze: &Vec<Vec<char>>, block_size: usize) {
-        const ROTATION_SPEED: f32 = std::f32::consts::PI / 180.0; // Velocidad de rotación
+        const ROTATION_SPEED: f32 = std::f32::consts::PI / 100.0; // Velocidad de rotación
     
-        // Obtener el tamaño de la ventana
-        if let Some((mouse_x, _mouse_y)) = window.get_mouse_pos(minifb::MouseMode::Pass) {
-            // Ancho de la ventana
-            let window_width = 1080.0;
-            
-            // Definir los límites de las zonas
-            let center_zone_left = window_width * 0.4;  // 40% desde la izquierda
-            let center_zone_right = window_width * 0.6; // 60% desde la izquierda
-    
-            // Definir la velocidad de rotación constante
-            let rotation_speed = 0.05;
-    
-            if mouse_x < center_zone_left {
-                // Zona izquierda: rotar hacia la izquierda
-                self.a -= rotation_speed;
-            } else if mouse_x > center_zone_right {
-                // Zona derecha: rotar hacia la derecha
-                self.a += rotation_speed;
+        // Solo procesar la rotación con el mouse si mouse_control es verdadero
+        if self.mouse_control {
+            if let Some((mouse_x, _mouse_y)) = window.get_mouse_pos(minifb::MouseMode::Pass) {
+                // Ancho de la ventana
+                let window_width = 1080.0;
+                
+                // Definir los límites de las zonas
+                let center_zone_left = window_width * 0.4;  // 40% desde la izquierda
+                let center_zone_right = window_width * 0.6; // 60% desde la izquierda
+        
+                // Definir la velocidad de rotación constante
+                let rotation_speed = 0.05;
+        
+                if mouse_x < center_zone_left {
+                    // Zona izquierda: rotar hacia la izquierda
+                    self.a -= rotation_speed;
+                } else if mouse_x > center_zone_right {
+                    // Zona derecha: rotar hacia la derecha
+                    self.a += rotation_speed;
+                }
+                // Si el mouse está en la zona central, no se hace nada
             }
-            // Si el mouse está en la zona central, no se hace nada
         }
     
         // Manejo de teclas A y D para rotación adicional
@@ -79,6 +81,7 @@ impl Player {
             self.pos.x = new_x;
             self.pos.y = new_y;
         }
+        
     
         // Comprobar si se mueve hacia atrás
         if window.is_key_down(Key::S) {

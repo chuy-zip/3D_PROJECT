@@ -182,6 +182,7 @@ fn main() {
     let framebuffer_width = 650;
     let framebuffer_height = 450;
     let maze = load_maze("./maze.txt");
+    let block_siz2d = 50;
     let block_size = 50;
     let frame_delay = Duration::from_millis(16);
 
@@ -223,13 +224,16 @@ fn main() {
         if window.is_key_down(Key::M) {
             mode = if mode == "2D" { "3D" } else { "2D" };
         }
+        if window.is_key_down(Key::Y){
+            player.mouse_control = !player.mouse_control;
+        }
 
         player.process_events(&window, &maze, block_size);
 
         framebuffer.clear();
 
         if mode == "2D" {
-            render2d(&mut framebuffer, &player, &maze, block_size);
+            render2d(&mut framebuffer, &player, &maze, block_siz2d);
         } else {
             render3d(&mut framebuffer, &player, &maze, block_size)
         }
@@ -242,7 +246,7 @@ fn main() {
         }
 
         framebuffer.set_current_color(0xFFFFFF); // Establece el color blanco para el texto
-        framebuffer.draw_text(10, 10, &format!("FPS: {}", current_fps)); // Dibuja los FPS
+        framebuffer.draw_text(600, 10, &format!("FPS: {}", current_fps)); // Dibuja los FPS
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
