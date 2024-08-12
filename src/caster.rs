@@ -25,7 +25,6 @@ pub fn cast_ray(
     draw_line: bool,
 ) -> Intersect {
     let mut d = 0.0;
-
     framebuffer.set_current_color(0xFFFFFF);
 
     loop {
@@ -36,6 +35,12 @@ pub fn cast_ray(
 
         let i = x / block_size;
         let j = y / block_size;
+
+        // Asegúrate de que i y j están dentro de los límites del laberinto
+        if i >= maze[0].len() || j >= maze.len() {
+            // Si sale de los límites, rompe el bucle o maneja el error
+            break;
+        }
 
         if draw_line {
             framebuffer.point(x, y);
@@ -55,5 +60,12 @@ pub fn cast_ray(
         }
 
         d += 1.0;
+    }
+
+    // Devuelve un valor por defecto si no se encuentra intersección
+    Intersect {
+        distance: d,
+        impact: ' ',
+        tex_coord: 0.0,
     }
 }

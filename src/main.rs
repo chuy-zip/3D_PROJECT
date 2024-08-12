@@ -147,34 +147,43 @@ fn render2d(
     player: &Player,
     maze: &Vec<Vec<char>>,
     block_size: usize,
+    block_siz2d: usize, // Cambié el nombre del parámetro para reflejar el tamaño del bloque en 2D
 ) {
-    // draws maze
+    let scale_factor = block_siz2d as f32 / block_size as f32;
+
+    // Escalar la posición del jugador para la vista 2D
+    let player_pos_2d = Vec2::new(
+        player.pos.x * scale_factor,
+        player.pos.y * scale_factor,
+    );
+
+    // Dibujar el laberinto
     for row in 0..maze.len() {
         for col in 0..maze[row].len() {
             draw_cell(
                 framebuffer,
-                col * block_size,
-                row * block_size,
-                block_size,
+                col * block_siz2d,
+                row * block_siz2d,
+                block_siz2d,
                 maze[row][col],
-            )
+            );
         }
     }
 
-    // draw player
+    // Dibujar al jugador
     framebuffer.set_current_color(0xFFDDD);
-    framebuffer.point(player.pos.x as usize, player.pos.y as usize);
+    framebuffer.point(player_pos_2d.x as usize, player_pos_2d.y as usize);
 
-    // cast ray
-    // cast_ray(framebuffer, &maze, &player, player.a, block_size);
+    // Lanzar rayos
     let num_rays = 5;
     for i in 0..num_rays {
         let current_ray = i as f32 / num_rays as f32;
         let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
 
-        cast_ray(framebuffer, &maze, &player, a, block_size, true);
+        cast_ray(framebuffer, &maze, &player, a, block_siz2d, true);
     }
 }
+
 
 fn main() {
     let window_width = 1080;
@@ -182,7 +191,7 @@ fn main() {
     let framebuffer_width = 650;
     let framebuffer_height = 450;
     let maze = load_maze("./maze.txt");
-    let block_siz2d = 50;
+    let block_siz2d = 10;
     let block_size = 50;
     let frame_delay = Duration::from_millis(16);
 
@@ -207,7 +216,7 @@ fn main() {
     framebuffer.set_background_color(0xb69f66);
 
     let mut player = Player::new(
-        Vec2::new(75.0, 75.0),
+        Vec2::new(100.0, 100.0),
         std::f32::consts::PI / 3.0,
         std::f32::consts::PI / 3.0,
     );
@@ -233,9 +242,11 @@ fn main() {
         framebuffer.clear();
 
         if mode == "2D" {
-            render2d(&mut framebuffer, &player, &maze, block_siz2d);
+            render2d(&mut framebuffer, &player, &maze, block_size, block_siz2d);
+            
         } else {
-            render3d(&mut framebuffer, &player, &maze, block_size)
+            render3d(&mut framebuffer, &player, &maze, block_size);
+            render2d(&mut framebuffer, &player, &maze, block_size, block_siz2d);
         }
 
         fps_counter += 1;
