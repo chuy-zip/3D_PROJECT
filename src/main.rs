@@ -221,7 +221,7 @@ fn main() {
         std::f32::consts::PI / 3.0,
     );
 
-    let mut mode = "2D";
+    let mut mode = "3D";
 
     window.set_position(0, 0);
     window.set_cursor_visibility(true);
@@ -241,10 +241,7 @@ fn main() {
 
         framebuffer.clear();
 
-        if mode == "2D" {
-            render2d(&mut framebuffer, &player, &maze, block_size, block_siz2d);
-            
-        } else {
+        if mode == "3D" {
             render3d(&mut framebuffer, &player, &maze, block_size);
             render2d(&mut framebuffer, &player, &maze, block_size, block_siz2d);
         }
