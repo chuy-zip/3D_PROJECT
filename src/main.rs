@@ -5,7 +5,7 @@ mod player;
 
 use crate::caster::{cast_ray, load_textures};
 use crate::framebuffer::Framebuffer;
-use crate::maze::load_maze;
+use crate::maze::{load_maze, find_start_position};
 use crate::player::Player;
 use image::{DynamicImage, GenericImageView, Rgba};
 use minifb::{Key, Scale, Window, WindowOptions};
@@ -13,7 +13,7 @@ use nalgebra_glm::Vec2;
 use std::time::{Duration, Instant};
 
 fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: usize, cell: char) {
-    if cell == ' ' {
+    if cell == ' ' || cell == 's' || cell == 'g'{
         return;
     }
 
@@ -148,6 +148,7 @@ fn render2d(
     maze: &Vec<Vec<char>>,
     block_size: usize,
     block_siz2d: usize, // Cambié el nombre del parámetro para reflejar el tamaño del bloque en 2D
+    view: bool,
 ) {
     let scale_factor = block_siz2d as f32 / block_size as f32;
 
@@ -177,18 +178,18 @@ fn render2d(
         let current_ray = i as f32 / num_rays as f32;
         let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
 
-        cast_ray(framebuffer, &maze, &player, a, block_siz2d, true);
+        cast_ray(framebuffer, &maze, &player, a, block_siz2d, view);
     }
 }
 
 fn main() {
-    let block_size = 25;
+    let block_size = 30;
     // REcordatorio, son 13 casillas de largo y 9 de alto
 
     let window_width = 1080;
     let window_height = 720;
-    let framebuffer_width = 325; // 325
-    let framebuffer_height = 225; // 225
+    let framebuffer_width = block_size*13; // 325
+    let framebuffer_height = block_size*9; // 225
     let maze = load_maze("./maze.txt");
     let block_siz2d = 5;
     let frame_delay = Duration::from_millis(16);
@@ -196,7 +197,10 @@ fn main() {
     let mut last_frame_time = std::time::Instant::now();
     let mut fps_counter = 0;
     let mut current_fps = 0;
+
     let mut prev_y_pressed = false;
+    let mut m_pressed = false;
+    let mut mode = "3D";
 
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
 
@@ -213,14 +217,18 @@ fn main() {
     .unwrap();
 
     framebuffer.set_background_color(0xb69f66);
-
+    
     let mut player = Player::new(
-        Vec2::new(100.0, 100.0),
+        Vec2::new(30.0, 30.0),
         std::f32::consts::PI / 3.0,
         std::f32::consts::PI / 3.0,
     );
 
-    let mut mode = "3D";
+    if let Some((start_x, start_y)) = find_start_position(&maze, block_size) {
+        player.pos = Vec2::new(start_x as f32, start_y as f32);
+    } else {
+        panic!("No start position ('s') found in the maze!");
+    }
 
     window.set_position(0, 0);
     window.set_cursor_visibility(true);
@@ -229,9 +237,16 @@ fn main() {
         if window.is_key_down(Key::Escape) {
             break;
         }
+
         if window.is_key_down(Key::M) {
-            mode = if mode == "2D" { "3D" } else { "2D" };
+            if !m_pressed {
+                mode = if mode == "2D" { "3D" } else { "2D" };
+                m_pressed = true;
+            }
+        } else {
+            m_pressed = false;
         }
+
         let is_y_pressed = window.is_key_down(Key::Y);
 
         if is_y_pressed && !prev_y_pressed {
@@ -246,7 +261,9 @@ fn main() {
 
         if mode == "3D" {
             render3d(&mut framebuffer, &player, &maze, block_size);
-            render2d(&mut framebuffer, &player, &maze, block_size, block_siz2d);
+            render2d(&mut framebuffer, &player, &maze, block_size, block_siz2d, false);
+        } else {
+            render2d(&mut framebuffer, &player, &maze, block_size, block_size, true);
         }
 
         fps_counter += 1;
@@ -257,7 +274,7 @@ fn main() {
         }
 
         framebuffer.set_current_color(0xFFFFFF); // Establece el color blanco para el texto
-        framebuffer.draw_text(280, 10, &format!("FPS: {}", current_fps)); // Dibuja los FPS
+        framebuffer.draw_text(180, 10, &format!("FPS: {}", current_fps)); // Dibuja los FPS
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)

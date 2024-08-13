@@ -46,7 +46,7 @@ pub fn cast_ray(
             framebuffer.point(x, y);
         }
 
-        if maze[j][i] != ' ' {
+        if maze[j][i] != ' ' && maze[j][i] != 's' {
             let tex_coord = if a.cos().abs() > a.sin().abs() {
                 (x % block_size) as f32 / block_size as f32
             } else {

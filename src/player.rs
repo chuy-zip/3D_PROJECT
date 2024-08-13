@@ -16,8 +16,8 @@ impl Player {
             pos,
             a,
             fov,
-            move_speed: 5.0, // valor por defecto
-            run_multiplier: 3.0, // valor por defecto para la velocidad al correr
+            move_speed: 3.0, // valor por defecto
+            run_multiplier: 2.0, // valor por defecto para la velocidad al correr
             mouse_control: false, // Inicializa como None
         }
     }
@@ -75,7 +75,7 @@ impl Player {
     
         // Comprobar colisiones con paredes
         if window.is_key_down(Key::W) {
-            if maze[new_j][new_i] != ' ' {
+            if maze[new_j][new_i] != ' ' &&  maze[new_j][new_i] != 's'{
                 return; // Si hay una pared, no actualizar la posición
             }
             self.pos.x = new_x;
@@ -89,7 +89,7 @@ impl Player {
             let new_y = self.pos.y - self.a.sin() * speed;
             let new_i = (new_x / block_size as f32) as usize;
             let new_j = (new_y / block_size as f32) as usize;
-            if maze[new_j][new_i] != ' ' {
+            if maze[new_j][new_i] != ' ' &&  maze[new_j][new_i] != 's'{
                 return;
             }
             self.pos.x = new_x;
