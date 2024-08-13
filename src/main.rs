@@ -3,14 +3,14 @@ mod framebuffer;
 mod maze;
 mod player;
 
-use std::time::{Duration, Instant};
 use crate::caster::{cast_ray, load_textures};
 use crate::framebuffer::Framebuffer;
 use crate::maze::load_maze;
 use crate::player::Player;
 use image::{DynamicImage, GenericImageView, Rgba};
-use minifb::{Key, Window, WindowOptions, Scale};
+use minifb::{Key, Scale, Window, WindowOptions};
 use nalgebra_glm::Vec2;
+use std::time::{Duration, Instant};
 
 fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: usize, cell: char) {
     if cell == ' ' {
@@ -58,8 +58,6 @@ fn interpolate_color(start: u32, end: u32, t: f32) -> u32 {
 
     ((r as u32) << 16) | ((g as u32) << 8) | (b as u32)
 }
-
-
 
 fn render3d(
     framebuffer: &mut Framebuffer,
@@ -116,13 +114,15 @@ fn render3d(
                 (intersect.tex_coord * texture.width() as f32) as u32,
                 tex_y as u32,
             );
-            
+
             // Calcular la opacidad en función de la distancia
             let opacity = (1.0 - (distance_to_wall / max_distance)).clamp(0.0, 1.0);
             let blended_color = blend_color_with_opacity(color, opacity);
-            
+
             framebuffer.set_current_color(
-                (blended_color[0] as u32) << 16 | (blended_color[1] as u32) << 8 | blended_color[2] as u32,
+                (blended_color[0] as u32) << 16
+                    | (blended_color[1] as u32) << 8
+                    | blended_color[2] as u32,
             );
             framebuffer.point(i, y);
         }
@@ -152,10 +152,7 @@ fn render2d(
     let scale_factor = block_siz2d as f32 / block_size as f32;
 
     // Escalar la posición del jugador para la vista 2D
-    let player_pos_2d = Vec2::new(
-        player.pos.x * scale_factor,
-        player.pos.y * scale_factor,
-    );
+    let player_pos_2d = Vec2::new(player.pos.x * scale_factor, player.pos.y * scale_factor);
 
     // Dibujar el laberinto
     for row in 0..maze.len() {
@@ -184,20 +181,22 @@ fn render2d(
     }
 }
 
-
 fn main() {
+    let block_size = 25;
+    // REcordatorio, son 13 casillas de largo y 9 de alto
+
     let window_width = 1080;
     let window_height = 720;
-    let framebuffer_width = 650;
-    let framebuffer_height = 450;
+    let framebuffer_width = 325; // 325
+    let framebuffer_height = 225; // 225
     let maze = load_maze("./maze.txt");
-    let block_siz2d = 10;
-    let block_size = 50;
+    let block_siz2d = 5;
     let frame_delay = Duration::from_millis(16);
 
     let mut last_frame_time = std::time::Instant::now();
     let mut fps_counter = 0;
     let mut current_fps = 0;
+    let mut prev_y_pressed = false;
 
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
 
@@ -233,9 +232,13 @@ fn main() {
         if window.is_key_down(Key::M) {
             mode = if mode == "2D" { "3D" } else { "2D" };
         }
-        if window.is_key_down(Key::Y){
+        let is_y_pressed = window.is_key_down(Key::Y);
+
+        if is_y_pressed && !prev_y_pressed {
             player.mouse_control = !player.mouse_control;
         }
+
+        prev_y_pressed = is_y_pressed;
 
         player.process_events(&window, &maze, block_size);
 
@@ -254,7 +257,7 @@ fn main() {
         }
 
         framebuffer.set_current_color(0xFFFFFF); // Establece el color blanco para el texto
-        framebuffer.draw_text(600, 10, &format!("FPS: {}", current_fps)); // Dibuja los FPS
+        framebuffer.draw_text(280, 10, &format!("FPS: {}", current_fps)); // Dibuja los FPS
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
