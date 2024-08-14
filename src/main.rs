@@ -7,7 +7,7 @@ mod sfx;
 use crate::caster::{cast_ray, load_textures};
 use crate::framebuffer::Framebuffer;
 use crate::maze::{find_start_position, load_maze};
-use crate::sfx::{play_sound};
+use crate::sfx::{play_sound, play_background_music};
 use crate::player::Player;
 use image::{DynamicImage, GenericImageView, Rgba};
 use minifb::{Key, Scale, Window, WindowOptions};
@@ -235,9 +235,11 @@ fn main() {
     window.set_position(0, 0);
     window.set_cursor_visibility(true);
 
+    play_background_music("./src/sound/background.mp3");
+
     while window.is_open() {
         let current_tile = player.get_current_tile(&maze, block_size);
-
+        
         //match current_tile {
           //  Some(tile) => println!("The player is currently on tile '{}'", tile),
           //  None => println!("The player is out of bounds!"),

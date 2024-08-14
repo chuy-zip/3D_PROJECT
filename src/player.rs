@@ -33,7 +33,7 @@ impl Player {
 
     pub fn process_events(&mut self, window: &Window, maze: &Vec<Vec<char>>, block_size: usize) {
         const ROTATION_SPEED: f32 = std::f32::consts::PI / 70.0; // Velocidad de rotación
-
+    
         // Solo procesar la rotación con el mouse si mouse_control es verdadero
         if self.mouse_control {
             if let Some((mouse_x, _mouse_y)) = window.get_mouse_pos(minifb::MouseMode::Pass) {
@@ -41,7 +41,7 @@ impl Player {
                 let center_zone_left = window_width * 0.4;
                 let center_zone_right = window_width * 0.6;
                 let rotation_speed = 0.05;
-
+    
                 if mouse_x < center_zone_left {
                     self.a -= rotation_speed;
                 } else if mouse_x > center_zone_right {
@@ -49,30 +49,30 @@ impl Player {
                 }
             }
         }
-
+    
         // Manejo de teclas A y D para rotación adicional
         if window.is_key_down(Key::A) {
             self.a -= ROTATION_SPEED;
         }
-
+    
         if window.is_key_down(Key::D) {
             self.a += ROTATION_SPEED;
         }
-
+    
         let speed = if window.is_key_down(Key::LeftShift) {
             self.move_speed * self.run_multiplier
         } else {
             self.move_speed
         };
-
+    
         let mut moved = false;
-
+    
         // Calcular la nueva posición en función de la dirección actual y la velocidad
         let new_x = self.pos.x + self.a.cos() * speed;
         let new_y = self.pos.y + self.a.sin() * speed;
         let new_i = (new_x / block_size as f32) as usize;
         let new_j = (new_y / block_size as f32) as usize;
-
+    
         if window.is_key_down(Key::W) {
             if maze[new_j][new_i] != ' ' && maze[new_j][new_i] != 's' && maze[new_j][new_i] != 'g' {
                 return;
@@ -81,7 +81,7 @@ impl Player {
             self.pos.y = new_y;
             moved = true;
         }
-
+    
         if window.is_key_down(Key::S) {
             let new_x = self.pos.x - self.a.cos() * speed;
             let new_y = self.pos.y - self.a.sin() * speed;
@@ -94,11 +94,19 @@ impl Player {
             self.pos.y = new_y;
             moved = true;
         }
-
+    
         if moved {
+            // Ajustar la velocidad del sonido según si Shift está presionado
+            let speed_multiplier = if window.is_key_down(Key::LeftShift) { 2.0 } else { 1.0 };
+            
             // Si el jugador se mueve y no hay sonido en reproducción, inicia el sonido
             if self.sound_sink.is_none() {
-                self.start_walking_sound();
+                self.start_walking_sound(speed_multiplier);
+            } else {
+                // Ajustar la velocidad del sonido si ya está en reproducción
+                if let Some(sink) = &self.sound_sink {
+                    sink.lock().unwrap().set_speed(speed_multiplier);
+                }
             }
         } else {
             // Si el jugador deja de moverse y el sonido está en reproducción, detén el sonido
@@ -110,20 +118,25 @@ impl Player {
             }
         }
     }
+    
 
-    pub fn start_walking_sound(&mut self) {
+    pub fn start_walking_sound(&mut self, speed_multiplier: f32) {
         let (stream, stream_handle) = OutputStream::try_default().unwrap();
         let sink = Sink::try_new(&stream_handle).unwrap();
-
+    
         let file = File::open("./src/sound/steps.mp3").unwrap();
         let source = Decoder::new(BufReader::new(file)).unwrap().repeat_infinite();
-
+    
         sink.append(source);
-
+        
+        // Ajustar la frecuencia del sonido
+        sink.set_speed(speed_multiplier);
+    
         // Mantenemos el OutputStream vivo usando Arc
         self._stream = Some(Arc::new(stream));
         self.sound_sink = Some(Arc::new(Mutex::new(sink)));
     }
+    
 
     pub fn get_current_tile(&self, maze: &Vec<Vec<char>>, block_size: usize) -> Option<char> {
         let i = (self.pos.x / block_size as f32) as usize;
