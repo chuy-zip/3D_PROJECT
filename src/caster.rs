@@ -38,7 +38,6 @@ pub fn cast_ray(
 
         // Asegúrate de que i y j están dentro de los límites del laberinto
         if i >= maze[0].len() || j >= maze.len() {
-            // Si sale de los límites, rompe el bucle o maneja el error
             break;
         }
 
@@ -46,12 +45,24 @@ pub fn cast_ray(
             framebuffer.point(x, y);
         }
 
-        if maze[j][i] != ' ' && maze[j][i] != 's' && maze[j][i] != 'g'{
-            let tex_coord = if a.cos().abs() > a.sin().abs() {
-                (x % block_size) as f32 / block_size as f32
+        if maze[j][i] != ' ' && maze[j][i] != 's' && maze[j][i] != 'g' {
+            let (hit_vertical, tex_coord) = if (x % block_size) == 0 {
+                // Golpe vertical
+                (true, (y % block_size) as f32 / block_size as f32)
+            } else if (y % block_size) == 0 {
+                // Golpe horizontal
+                (false, (x % block_size) as f32 / block_size as f32)
             } else {
-                (y % block_size) as f32 / block_size as f32
+                // Determinar si es más cercano a un golpe vertical u horizontal
+                let x_mod = (x % block_size) as f32 / block_size as f32;
+                let y_mod = (y % block_size) as f32 / block_size as f32;
+                if x_mod > y_mod {
+                    (true, y_mod)
+                } else {
+                    (false, x_mod)
+                }
             };
+
             return Intersect {
                 distance: d,
                 impact: maze[j][i],
@@ -62,7 +73,6 @@ pub fn cast_ray(
         d += 1.0;
     }
 
-    // Devuelve un valor por defecto si no se encuentra intersección
     Intersect {
         distance: d,
         impact: ' ',
