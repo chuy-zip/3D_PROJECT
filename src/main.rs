@@ -2,10 +2,12 @@ mod caster;
 mod framebuffer;
 mod maze;
 mod player;
+mod sfx;
 
 use crate::caster::{cast_ray, load_textures};
 use crate::framebuffer::Framebuffer;
 use crate::maze::{find_start_position, load_maze};
+use crate::sfx::{play_sound};
 use crate::player::Player;
 use image::{DynamicImage, GenericImageView, Rgba};
 use minifb::{Key, Scale, Window, WindowOptions};
@@ -94,7 +96,7 @@ fn render3d(
         let intersect = cast_ray(framebuffer, &maze, &player, a, block_size, false);
 
         let distance_to_wall = intersect.distance;
-        let distance_to_projection_plane = 100.0;
+        let distance_to_projection_plane = 90.0;
         let stake_height = (hh / distance_to_wall) * distance_to_projection_plane;
 
         let stake_top = (hh - (stake_height / 2.0)) as usize;
@@ -192,7 +194,7 @@ fn main() {
     let framebuffer_height = block_size * 9; // 225
     let maze = load_maze("./maze.txt");
     let block_siz2d = 5;
-    let frame_delay = Duration::from_millis(16);
+    let frame_delay = Duration::from_millis(20);
 
     let mut last_frame_time = std::time::Instant::now();
     let mut fps_counter = 0;
@@ -236,10 +238,10 @@ fn main() {
     while window.is_open() {
         let current_tile = player.get_current_tile(&maze, block_size);
 
-        match current_tile {
-            Some(tile) => println!("The player is currently on tile '{}'", tile),
-            None => println!("The player is out of bounds!"),
-        }
+        //match current_tile {
+          //  Some(tile) => println!("The player is currently on tile '{}'", tile),
+          //  None => println!("The player is out of bounds!"),
+        //}
 
         if window.is_key_down(Key::Escape) {
             break;
@@ -249,6 +251,7 @@ fn main() {
             if !m_pressed {
                 mode = if mode == "2D" { "3D" } else { "2D" };
                 m_pressed = true;
+                play_sound("./src/sound/digimap.mp3")
             }
         } else {
             m_pressed = false;
@@ -257,6 +260,8 @@ fn main() {
         let is_y_pressed = window.is_key_down(Key::Y);
 
         if is_y_pressed && !prev_y_pressed {
+            play_sound("./src/sound/digicam.mp3");
+
             player.mouse_control = !player.mouse_control;
         }
 
