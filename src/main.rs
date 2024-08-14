@@ -223,7 +223,7 @@ fn main() {
     let mut player = Player::new(
         Vec2::new(30.0, 30.0),
         std::f32::consts::PI / 3.0,
-        std::f32::consts::PI / 3.0,
+        std::f32::consts::PI / 3.5
     );
 
     if let Some((start_x, start_y)) = find_start_position(&maze, block_size) {
