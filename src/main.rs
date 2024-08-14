@@ -77,13 +77,13 @@ fn render3d(
     // Dibujar el degradado en el techo y el piso
     for y in 0..hh as usize {
         let distance_ratio = y as f32 / hh;
-        let ceiling_color = interpolate_color(0x402905, 0x000000, distance_ratio);
+        let ceiling_color = interpolate_color(0x252423, 0x000000, distance_ratio);
         framebuffer.set_current_color(ceiling_color);
         for i in 0..framebuffer.width {
             framebuffer.point(i, y);
         }
 
-        let floor_color = interpolate_color(0x6b5428, 0x000000, distance_ratio);
+        let floor_color = interpolate_color(0x5b6567, 0x000000, distance_ratio);
         framebuffer.set_current_color(floor_color);
         for i in 0..framebuffer.width {
             framebuffer.point(i, framebuffer.height - y - 1); // Asegúrate de no exceder los límites

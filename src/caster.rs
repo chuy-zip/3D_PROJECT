@@ -9,10 +9,10 @@ pub struct Intersect {
 }
 
 pub fn load_textures() -> (DynamicImage, DynamicImage, DynamicImage, DynamicImage) {
-    let texture_plus = image::open("./src/img/BRICK_3D.PNG").unwrap();
-    let texture_minus = image::open("./src/img/BRICK_3B.PNG").unwrap();
-    let texture_pipe = image::open("./src/img/BRICK_3D.PNG").unwrap();
-    let texture_g = image::open("./src/img/BRICK_1A.PNG").unwrap();
+    let texture_plus = image::open("./src/img/TECH_4E.PNG").unwrap();
+    let texture_minus = image::open("./src/img/TECH_1E.PNG").unwrap();
+    let texture_pipe = image::open("./src/img/TECH_3B.PNG").unwrap();
+    let texture_g = image::open("./src/img/TECH_4F.PNG").unwrap();
     (texture_plus, texture_minus, texture_pipe, texture_g)
 }
 
