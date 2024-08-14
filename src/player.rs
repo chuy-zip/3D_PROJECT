@@ -75,7 +75,7 @@ impl Player {
     
         // Comprobar colisiones con paredes
         if window.is_key_down(Key::W) {
-            if maze[new_j][new_i] != ' ' &&  maze[new_j][new_i] != 's'{
+            if maze[new_j][new_i] != ' ' &&  maze[new_j][new_i] != 's' &&  maze[new_j][new_i] != 'g'{
                 return; // Si hay una pared, no actualizar la posición
             }
             self.pos.x = new_x;
@@ -89,11 +89,22 @@ impl Player {
             let new_y = self.pos.y - self.a.sin() * speed;
             let new_i = (new_x / block_size as f32) as usize;
             let new_j = (new_y / block_size as f32) as usize;
-            if maze[new_j][new_i] != ' ' &&  maze[new_j][new_i] != 's'{
+            if maze[new_j][new_i] != ' ' &&  maze[new_j][new_i] != 's' &&  maze[new_j][new_i] != 'g'{
                 return;
             }
             self.pos.x = new_x;
             self.pos.y = new_y;
+        }
+    }
+
+    pub fn get_current_tile(&self, maze: &Vec<Vec<char>>, block_size: usize) -> Option<char> {
+        let i = (self.pos.x / block_size as f32) as usize;
+        let j = (self.pos.y / block_size as f32) as usize;
+
+        if i < maze[0].len() && j < maze.len() {
+            Some(maze[j][i])
+        } else {
+            None
         }
     }
     

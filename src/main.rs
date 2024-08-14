@@ -5,7 +5,7 @@ mod player;
 
 use crate::caster::{cast_ray, load_textures};
 use crate::framebuffer::Framebuffer;
-use crate::maze::{load_maze, find_start_position};
+use crate::maze::{find_start_position, load_maze};
 use crate::player::Player;
 use image::{DynamicImage, GenericImageView, Rgba};
 use minifb::{Key, Scale, Window, WindowOptions};
@@ -13,7 +13,7 @@ use nalgebra_glm::Vec2;
 use std::time::{Duration, Instant};
 
 fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: usize, cell: char) {
-    if cell == ' ' || cell == 's' || cell == 'g'{
+    if cell == ' ' || cell == 's' || cell == 'g' {
         return;
     }
 
@@ -188,8 +188,8 @@ fn main() {
 
     let window_width = 1080;
     let window_height = 720;
-    let framebuffer_width = block_size*13; // 325
-    let framebuffer_height = block_size*9; // 225
+    let framebuffer_width = block_size * 13; // 325
+    let framebuffer_height = block_size * 9; // 225
     let maze = load_maze("./maze.txt");
     let block_siz2d = 5;
     let frame_delay = Duration::from_millis(16);
@@ -217,7 +217,7 @@ fn main() {
     .unwrap();
 
     framebuffer.set_background_color(0xb69f66);
-    
+
     let mut player = Player::new(
         Vec2::new(30.0, 30.0),
         std::f32::consts::PI / 3.0,
@@ -234,6 +234,13 @@ fn main() {
     window.set_cursor_visibility(true);
 
     while window.is_open() {
+        let current_tile = player.get_current_tile(&maze, block_size);
+
+        match current_tile {
+            Some(tile) => println!("The player is currently on tile '{}'", tile),
+            None => println!("The player is out of bounds!"),
+        }
+
         if window.is_key_down(Key::Escape) {
             break;
         }
@@ -261,9 +268,23 @@ fn main() {
 
         if mode == "3D" {
             render3d(&mut framebuffer, &player, &maze, block_size);
-            render2d(&mut framebuffer, &player, &maze, block_size, block_siz2d, false);
+            render2d(
+                &mut framebuffer,
+                &player,
+                &maze,
+                block_size,
+                block_siz2d,
+                false,
+            );
         } else {
-            render2d(&mut framebuffer, &player, &maze, block_size, block_size, true);
+            render2d(
+                &mut framebuffer,
+                &player,
+                &maze,
+                block_size,
+                block_size,
+                true,
+            );
         }
 
         fps_counter += 1;
