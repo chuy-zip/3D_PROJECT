@@ -11,6 +11,7 @@ use std::time::{Duration, Instant};
 
 // Definición del enum para los estados del juego
 pub enum GameState {
+    WelcomeScreen,
     Playing,
     // Otros estados como MainMenu, GameOver, etc.
 }
@@ -40,8 +41,8 @@ impl Game {
 
         let window_width = 1080;
         let window_height = 720;
-        let framebuffer_width = block_size * 13;
-        let framebuffer_height = block_size * 9;
+        let framebuffer_width = block_size * 13; //390
+        let framebuffer_height = block_size * 9; //270
         let frame_delay = Duration::from_millis(20);
 
         let mut window = Window::new(
@@ -80,7 +81,7 @@ impl Game {
 
         Game {
             window,
-            state: GameState::Playing,
+            state: GameState::WelcomeScreen,
             player,
             framebuffer,
             maze,
@@ -99,7 +100,29 @@ impl Game {
     pub fn render(&mut self) {
         match self.state {
             GameState::Playing => self.render_playing(),
+            GameState::WelcomeScreen => self.render_tittle_screen()
             // Otros estados se manejarían aquí
+        }
+    }
+
+    fn render_tittle_screen(&mut self){
+        
+        self.framebuffer.clear();
+        self.framebuffer.draw_image("./src/img/tittleScreen.png", 0, 0);
+
+        self.window.update_with_buffer(
+        &self.framebuffer.buffer,
+        self.framebuffer.width,
+        self.framebuffer.height,
+        )
+        .unwrap();
+            
+        if self.window.is_key_down(Key::Enter){
+            self.state = GameState::Playing;
+        }
+
+        if self.window.is_key_down(Key::Escape) {
+            return;
         }
     }
 
@@ -281,7 +304,7 @@ impl Game {
                 cast_ray(framebuffer, &maze, &player, a, block_siz2d, view);
             }
         }
-        
+
         let current_tile = self.player.get_current_tile(&self.maze, self.block_size);
 
         if self.window.is_key_down(Key::Escape) {

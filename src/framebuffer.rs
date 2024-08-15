@@ -1,3 +1,4 @@
+use image::GenericImageView;
 
 const FONT: [[u8; 5]; 10] = [
     [0b01110, 0b10001, 0b10001, 0b10001, 0b01110], // 0
@@ -84,5 +85,28 @@ impl Framebuffer {
             self.draw_char(x + i * 6, y, ch);
         }
     }
+
+    pub fn draw_image(&mut self, path: &str, x_offset: usize, y_offset: usize) {
+        // Carga la imagen desde el path especificado
+        let img = image::open(path).unwrap();
+        let img = img.to_rgba8(); // Asegúrate de que la imagen esté en formato RGBA
+    
+        let (img_width, img_height) = img.dimensions();
+    
+        // Recorre los píxeles de la imagen y cópialos en el framebuffer
+        for y in 0..img_height {
+            for x in 0..img_width {
+                if x as usize + x_offset < self.width && y as usize + y_offset < self.height {
+                    let pixel = img.get_pixel(x, y);
+                    let rgba = ((pixel[0] as u32) << 16) | // Rojo
+                               ((pixel[1] as u32) << 8)  | // Verde
+                               (pixel[2] as u32);        // Azul
+                               // El componente Alpha (transparencia) no se usa aquí
+                    self.buffer[(y as usize + y_offset) * self.width + (x as usize + x_offset)] = rgba;
+                }
+            }
+        }
+    }
+    
     
 }
