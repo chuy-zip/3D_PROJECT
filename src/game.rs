@@ -120,16 +120,43 @@ impl Game {
             .unwrap();
 
         if self.window.is_key_down(Key::Key1) {
+
+            self.maze = load_maze("./maze.txt");
+
+            if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
+                self.player.pos = Vec2::new(start_x as f32, start_y as f32);
+            } else {
+                panic!("No start position ('s') found in the maze!");
+            }
+
             self.maze_opt = 1;
             self.state = GameState::Playing;
         }
 
         if self.window.is_key_down(Key::Key2) {
+
+            self.maze = load_maze("./maze2.txt");
+
+            if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
+                self.player.pos = Vec2::new(start_x as f32, start_y as f32);
+            } else {
+                panic!("No start position ('s') found in the maze!");
+            }
+            
             self.maze_opt = 2;
             self.state = GameState::Playing;
         }
 
         if self.window.is_key_down(Key::Key3) {
+
+            self.maze = load_maze("./maze3.txt");
+
+            if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
+                self.player.pos = Vec2::new(start_x as f32, start_y as f32);
+            } else {
+                panic!("No start position ('s') found in the maze!");
+            }
+
             self.maze_opt = 3;
             self.state = GameState::Playing;
         }
@@ -137,8 +164,6 @@ impl Game {
         if self.window.is_key_down(Key::Escape) {
             return;
         }
-
-
     }
 
     fn render_end_screen(&mut self) {
@@ -355,8 +380,6 @@ impl Game {
             _ => "./default_maze.txt", // Por si acaso hay un valor fuera del rango esperado
         };
 
-        self.maze =  load_maze(selected_maze);
-        
         let current_tile = self.player.get_current_tile(&self.maze, self.block_size);
 
         if let Some('g') = current_tile {
@@ -420,7 +443,6 @@ impl Game {
                 self.framebuffer.height,
             )
             .unwrap();
-
 
         self.fps_counter += 1;
         if self.last_frame_time.elapsed() >= Duration::from_secs(1) {
