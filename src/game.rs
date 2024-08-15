@@ -120,7 +120,6 @@ impl Game {
             .unwrap();
 
         if self.window.is_key_down(Key::Key1) {
-
             self.maze = load_maze("./maze.txt");
 
             if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
@@ -134,7 +133,6 @@ impl Game {
         }
 
         if self.window.is_key_down(Key::Key2) {
-
             self.maze = load_maze("./maze2.txt");
 
             if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
@@ -142,13 +140,12 @@ impl Game {
             } else {
                 panic!("No start position ('s') found in the maze!");
             }
-            
+
             self.maze_opt = 2;
             self.state = GameState::Playing;
         }
 
         if self.window.is_key_down(Key::Key3) {
-
             self.maze = load_maze("./maze3.txt");
 
             if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
@@ -185,6 +182,9 @@ impl Game {
         if self.window.is_key_down(Key::Escape) {
             return;
         }
+
+        // Detener el sonido de caminar
+        self.player.stop_walking_sound();
     }
 
     fn render_playing(&mut self) {

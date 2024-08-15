@@ -136,7 +136,14 @@ impl Player {
         self._stream = Some(Arc::new(stream));
         self.sound_sink = Some(Arc::new(Mutex::new(sink)));
     }
-    
+
+    pub fn stop_walking_sound(&mut self) {
+        if let Some(sink) = self.sound_sink.take() {
+            if !sink.lock().unwrap().empty() {
+                sink.lock().unwrap().stop();
+            }
+        }
+    }
 
     pub fn get_current_tile(&self, maze: &Vec<Vec<char>>, block_size: usize) -> Option<char> {
         let i = (self.pos.x / block_size as f32) as usize;

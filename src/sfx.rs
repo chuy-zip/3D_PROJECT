@@ -2,7 +2,6 @@ use rodio::{Decoder, OutputStream, Sink, Source};
 use std::io::BufReader;
 use std::fs::File;
 use std::thread;
-use std::sync::{Arc, Mutex};
 
 pub fn play_sound(file_path: &str) {
     // Clone file_path into a String to move it into the new thread
