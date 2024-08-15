@@ -100,8 +100,13 @@ impl Game {
     }
 
     pub fn render(&mut self) {
+
+        let mut x_offset = 255; // Posición inicial en x
+        let y_offset = 170; // Posición fija en y
+        let mut direction = 1; // Dirección inicial: 1 = derecha, -1 = izquierda
+
         match self.state {
-            GameState::Playing => self.render_playing(),
+            GameState::Playing => self.render_playing(&mut x_offset, y_offset, &mut direction),
             GameState::WelcomeScreen => self.render_tittle_screen(),
             GameState::EndScreen => self.render_end_screen(),
         }
@@ -199,7 +204,7 @@ impl Game {
         self.player.stop_walking_sound();
     }
 
-    fn render_playing(&mut self) {
+    fn render_playing(&mut self,  x_offset: &mut usize, y_offset: usize, direction: &mut isize) {
         fn draw_cell(
             framebuffer: &mut Framebuffer,
             xo: usize,
@@ -425,6 +430,9 @@ impl Game {
                 self.block_siz2d,
                 true,
             );
+
+            self.framebuffer.draw_image("./src/img/lantern3.png", *x_offset, y_offset);
+
         } else {
             render2d(
                 &mut self.framebuffer,
