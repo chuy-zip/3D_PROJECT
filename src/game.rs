@@ -21,6 +21,7 @@ pub struct Game {
     pub state: GameState,
     pub player: Player,
     pub framebuffer: Framebuffer,
+    pub maze_opt: usize,
     pub maze: Vec<Vec<char>>,
     pub mode: &'static str,
     pub last_frame_time: Instant,
@@ -83,6 +84,7 @@ impl Game {
             state: GameState::WelcomeScreen,
             player,
             framebuffer,
+            maze_opt: 1,
             maze,
             mode: "3D",
             last_frame_time: Instant::now(),
@@ -117,13 +119,26 @@ impl Game {
             )
             .unwrap();
 
-        if self.window.is_key_down(Key::Enter) {
+        if self.window.is_key_down(Key::Key1) {
+            self.maze_opt = 1;
+            self.state = GameState::Playing;
+        }
+
+        if self.window.is_key_down(Key::Key2) {
+            self.maze_opt = 2;
+            self.state = GameState::Playing;
+        }
+
+        if self.window.is_key_down(Key::Key3) {
+            self.maze_opt = 3;
             self.state = GameState::Playing;
         }
 
         if self.window.is_key_down(Key::Escape) {
             return;
         }
+
+
     }
 
     fn render_end_screen(&mut self) {
@@ -329,6 +344,25 @@ impl Game {
             return;
         }
 
+        if self.window.is_key_down(Key::Enter) {
+            self.state = GameState::Playing;
+        }
+
+        let selected_maze = match self.maze_opt {
+            1 => "./maze.txt",
+            2 => "./maze2.txt",
+            3 => "./maze3.txt",
+            _ => "./default_maze.txt", // Por si acaso hay un valor fuera del rango esperado
+        };
+
+        self.maze =  load_maze(selected_maze);
+        
+        let current_tile = self.player.get_current_tile(&self.maze, self.block_size);
+
+        if let Some('g') = current_tile {
+            self.state = GameState::EndScreen;
+        }
+
         if self.window.is_key_down(Key::M) {
             if !self.m_pressed {
                 self.mode = if self.mode == "2D" { "3D" } else { "2D" };
@@ -387,19 +421,6 @@ impl Game {
             )
             .unwrap();
 
-        if self.window.is_key_down(Key::Enter) {
-            self.state = GameState::Playing;
-        }
-
-        if self.window.is_key_down(Key::Escape) {
-            return;
-        }
-
-        let current_tile = self.player.get_current_tile(&self.maze, self.block_size);
-
-        if let Some('g') = current_tile {
-            self.state = GameState::EndScreen;
-        }
 
         self.fps_counter += 1;
         if self.last_frame_time.elapsed() >= Duration::from_secs(1) {
@@ -410,7 +431,7 @@ impl Game {
 
         self.framebuffer.set_current_color(0xFFFFFF); // Establece el color blanco para el texto
         self.framebuffer
-            .draw_text(180, 10, &format!("FPS: {}", self.current_fps)); // Dibuja los FPS
+            .draw_text(220, 10, &format!("FPS: {}", self.current_fps)); // Dibuja los FPS
 
         self.window
             .update_with_buffer(
