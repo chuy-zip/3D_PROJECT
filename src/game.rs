@@ -32,6 +32,9 @@ pub struct Game {
     pub frame_delay: Duration,
     pub block_size: usize,
     pub block_siz2d: usize,
+    x_offset: usize,     // Posición del sprite
+    y_offset: usize,     // Posición fija en y
+    direction: isize,
 }
 
 impl Game {
@@ -96,17 +99,16 @@ impl Game {
             frame_delay,
             block_size,
             block_siz2d,
+            x_offset: 260,     // Posición inicial en x
+            y_offset: 190,     // Posición fija en y
+            direction: 1,      // Dirección inicial
         }
     }
 
     pub fn render(&mut self) {
 
-        let mut x_offset = 255; // Posición inicial en x
-        let y_offset = 170; // Posición fija en y
-        let mut direction = 1; // Dirección inicial: 1 = derecha, -1 = izquierda
-
         match self.state {
-            GameState::Playing => self.render_playing(&mut x_offset, y_offset, &mut direction),
+            GameState::Playing => self.render_playing(),
             GameState::WelcomeScreen => self.render_tittle_screen(),
             GameState::EndScreen => self.render_end_screen(),
         }
@@ -129,7 +131,6 @@ impl Game {
             self.maze = load_maze("./maze.txt");
 
             if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
-
                 self.player.a = std::f32::consts::PI / 1.0;
                 self.player.pos = Vec2::new(start_x as f32, start_y as f32);
             } else {
@@ -145,10 +146,8 @@ impl Game {
             self.maze = load_maze("./maze2.txt");
 
             if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
-
                 self.player.a = std::f32::consts::PI / 1.0;
                 self.player.pos = Vec2::new(start_x as f32, start_y as f32);
-                
             } else {
                 panic!("No start position ('s') found in the maze!");
             }
@@ -162,7 +161,7 @@ impl Game {
             self.maze = load_maze("./maze3.txt");
 
             if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
-                self.player.a = - std::f32::consts::PI / 2.0;
+                self.player.a = -std::f32::consts::PI / 2.0;
                 self.player.pos = Vec2::new(start_x as f32, start_y as f32);
             } else {
                 panic!("No start position ('s') found in the maze!");
@@ -181,7 +180,6 @@ impl Game {
     fn render_end_screen(&mut self) {
         self.framebuffer.clear();
         self.framebuffer.draw_image("./src/img/endScreen.png", 0, 0);
-
 
         self.window
             .update_with_buffer(
@@ -204,7 +202,7 @@ impl Game {
         self.player.stop_walking_sound();
     }
 
-    fn render_playing(&mut self,  x_offset: &mut usize, y_offset: usize, direction: &mut isize) {
+    fn render_playing(&mut self) {
         fn draw_cell(
             framebuffer: &mut Framebuffer,
             xo: usize,
@@ -350,7 +348,6 @@ impl Game {
             block_siz2d: usize, // Cambié el nombre del parámetro para reflejar el tamaño del bloque en 2D
             view: bool,
         ) {
-            
             player.update2d_position(block_size, block_siz2d);
 
             // Dibujar el laberinto
@@ -375,9 +372,9 @@ impl Game {
                 cast_ray(framebuffer, &maze, &player, a, block_siz2d, view, true);
             }
 
-             // Dibujar al jugador
-             framebuffer.set_current_color(0xFFDDD);
-             framebuffer.point(player.pos2d.x as usize, player.pos2d.y as usize);
+            // Dibujar al jugador
+            framebuffer.set_current_color(0xFFDDD);
+            framebuffer.point(player.pos2d.x as usize, player.pos2d.y as usize);
         }
 
         if self.window.is_key_down(Key::Escape) {
@@ -431,8 +428,15 @@ impl Game {
                 true,
             );
 
-            self.framebuffer.draw_image("./src/img/lantern3.png", *x_offset, y_offset);
+            self.framebuffer
+                .draw_image("./src/img/lantern3.png", self.x_offset, self.y_offset);
+            // Actualiza la posición en x
+            self.x_offset = (self.x_offset as isize + self.direction) as usize;
 
+            // Cambia la dirección cuando alcanza un límite
+            if self.x_offset > 270 || self.x_offset < 255 {
+                self.direction *= -1;
+            }
         } else {
             render2d(
                 &mut self.framebuffer,
