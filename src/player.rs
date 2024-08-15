@@ -8,6 +8,7 @@ use minifb::{Window, Key};
 
 pub struct Player {
     pub pos: Vec2,
+    pub pos2d: Vec2,
     pub a: f32, // ángulo de vista
     pub fov: f32, // campo de vista
     pub move_speed: f32,
@@ -18,9 +19,10 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(pos: Vec2, a: f32, fov: f32) -> Self {
+    pub fn new(pos: Vec2, pos2d: Vec2, a: f32, fov: f32) -> Self {
         Player {
             pos,
+            pos2d,
             a,
             fov,
             move_speed: 3.0, // valor por defecto
@@ -117,6 +119,15 @@ impl Player {
                 }
             }
         }
+    }
+
+    pub fn update2d_position(&mut self, block_size: usize, block_siz2d: usize){
+
+        let scale_factor = block_siz2d as f32 / block_size as f32;
+
+        self.pos2d.x = self.pos.x * scale_factor;
+        self.pos2d.y = self.pos.y * scale_factor; 
+
     }
     
 

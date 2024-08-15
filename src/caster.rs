@@ -1,6 +1,6 @@
-use image::{DynamicImage, GenericImageView};
 use crate::framebuffer::Framebuffer;
 use crate::player::Player;
+use image::{DynamicImage, GenericImageView};
 
 pub struct Intersect {
     pub distance: f32,
@@ -23,6 +23,7 @@ pub fn cast_ray(
     a: f32,
     block_size: usize,
     draw_line: bool,
+    is2d: bool,
 ) -> Intersect {
     let mut d = 0.0;
     framebuffer.set_current_color(0xFFFFFF);
@@ -30,8 +31,17 @@ pub fn cast_ray(
     loop {
         let cos = d * a.cos();
         let sin = d * a.sin();
-        let x = (player.pos.x + cos) as usize;
-        let y = (player.pos.y + sin) as usize;
+
+        let x;
+        let y;
+
+        if is2d {
+            x = (player.pos2d.x + cos) as usize;
+            y = (player.pos2d.y + sin) as usize;
+        } else {
+            x = (player.pos.x + cos) as usize;
+            y = (player.pos.y + sin) as usize;
+        }
 
         let i = x / block_size;
         let j = y / block_size;

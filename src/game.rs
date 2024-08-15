@@ -64,6 +64,7 @@ impl Game {
 
         let mut player = Player::new(
             Vec2::new(30.0, 30.0),
+            Vec2::new(5.0, 5.0),
             std::f32::consts::PI / 1.0,
             std::f32::consts::PI / 3.5,
         );
@@ -284,7 +285,7 @@ impl Game {
             for i in 0..num_rays {
                 let current_ray = i as f32 / num_rays as f32;
                 let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
-                let intersect = cast_ray(framebuffer, &maze, &player, a, block_size, false);
+                let intersect = cast_ray(framebuffer, &maze, &player, a, block_size, false, false);
 
                 let distance_to_wall = intersect.distance;
                 let distance_to_projection_plane = 90.0;
@@ -338,16 +339,14 @@ impl Game {
 
         fn render2d(
             framebuffer: &mut Framebuffer,
-            player: &Player,
+            player: &mut Player,
             maze: &Vec<Vec<char>>,
             block_size: usize,
             block_siz2d: usize, // Cambié el nombre del parámetro para reflejar el tamaño del bloque en 2D
             view: bool,
         ) {
-            let scale_factor = block_siz2d as f32 / block_size as f32;
-
-            // Escalar la posición del jugador para la vista 2D
-            let player_pos_2d = Vec2::new(player.pos.x * scale_factor, player.pos.y * scale_factor);
+            
+            player.update2d_position(block_size, block_siz2d);
 
             // Dibujar el laberinto
             for row in 0..maze.len() {
@@ -368,12 +367,12 @@ impl Game {
                 let current_ray = i as f32 / num_rays as f32;
                 let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
 
-                cast_ray(framebuffer, &maze, &player, a, block_siz2d, view);
+                cast_ray(framebuffer, &maze, &player, a, block_siz2d, view, true);
             }
 
              // Dibujar al jugador
              framebuffer.set_current_color(0xFFDDD);
-             framebuffer.point(player_pos_2d.x as usize, player_pos_2d.y as usize);
+             framebuffer.point(player.pos2d.x as usize, player.pos2d.y as usize);
         }
 
         if self.window.is_key_down(Key::Escape) {
@@ -420,7 +419,7 @@ impl Game {
             );
             render2d(
                 &mut self.framebuffer,
-                &self.player,
+                &mut self.player,
                 &self.maze,
                 self.block_size,
                 self.block_siz2d,
@@ -429,7 +428,7 @@ impl Game {
         } else {
             render2d(
                 &mut self.framebuffer,
-                &self.player,
+                &mut self.player,
                 &self.maze,
                 self.block_size,
                 self.block_size,

@@ -98,15 +98,31 @@ impl Framebuffer {
             for x in 0..img_width {
                 if x as usize + x_offset < self.width && y as usize + y_offset < self.height {
                     let pixel = img.get_pixel(x, y);
-                    let rgba = ((pixel[0] as u32) << 16) | // Rojo
-                               ((pixel[1] as u32) << 8)  | // Verde
-                               (pixel[2] as u32);        // Azul
-                               // El componente Alpha (transparencia) no se usa aquí
-                    self.buffer[(y as usize + y_offset) * self.width + (x as usize + x_offset)] = rgba;
+                    let alpha = pixel[3] as f32 / 255.0; // Componente Alfa (transparencia)
+    
+                    // Si el píxel no es completamente transparente
+                    if alpha > 0.0 {
+                        let background_color = self.buffer[(y as usize + y_offset) * self.width + (x as usize + x_offset)];
+    
+                        // Extrae los componentes RGB del color de fondo
+                        let bg_r = ((background_color >> 16) & 0xFF) as f32;
+                        let bg_g = ((background_color >> 8) & 0xFF) as f32;
+                        let bg_b = (background_color & 0xFF) as f32;
+    
+                        // Mezcla los colores usando el valor alfa
+                        let r = ((pixel[0] as f32 * alpha) + (bg_r * (1.0 - alpha))) as u32;
+                        let g = ((pixel[1] as f32 * alpha) + (bg_g * (1.0 - alpha))) as u32;
+                        let b = ((pixel[2] as f32 * alpha) + (bg_b * (1.0 - alpha))) as u32;
+    
+                        // Combina los componentes y asigna el color resultante al framebuffer
+                        let rgba = (r << 16) | (g << 8) | b;
+                        self.buffer[(y as usize + y_offset) * self.width + (x as usize + x_offset)] = rgba;
+                    }
                 }
             }
         }
     }
+    
     
     
 }
