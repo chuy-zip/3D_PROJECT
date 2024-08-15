@@ -32,7 +32,7 @@ impl Player {
     }
 
     pub fn process_events(&mut self, window: &Window, maze: &Vec<Vec<char>>, block_size: usize) {
-        const ROTATION_SPEED: f32 = std::f32::consts::PI / 60.0; // Velocidad de rotación
+        const ROTATION_SPEED: f32 = std::f32::consts::PI / 50.0; // Velocidad de rotación
     
         // Solo procesar la rotación con el mouse si mouse_control es verdadero
         if self.mouse_control {

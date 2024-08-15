@@ -64,7 +64,7 @@ impl Game {
 
         let mut player = Player::new(
             Vec2::new(30.0, 30.0),
-            std::f32::consts::PI / 3.0,
+            std::f32::consts::PI / 1.0,
             std::f32::consts::PI / 3.5,
         );
 
@@ -102,7 +102,7 @@ impl Game {
         match self.state {
             GameState::Playing => self.render_playing(),
             GameState::WelcomeScreen => self.render_tittle_screen(),
-            GameState::EndScreen => self.render_end_screen(), // Otros estados se manejarían aquí
+            GameState::EndScreen => self.render_end_screen(),
         }
     }
 
@@ -123,11 +123,14 @@ impl Game {
             self.maze = load_maze("./maze.txt");
 
             if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
+
+                self.player.a = std::f32::consts::PI / 1.0;
                 self.player.pos = Vec2::new(start_x as f32, start_y as f32);
             } else {
                 panic!("No start position ('s') found in the maze!");
             }
 
+            play_sound("./src/sound/mapSelect.mp3");
             self.maze_opt = 1;
             self.state = GameState::Playing;
         }
@@ -136,11 +139,15 @@ impl Game {
             self.maze = load_maze("./maze2.txt");
 
             if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
+
+                self.player.a = std::f32::consts::PI / 1.0;
                 self.player.pos = Vec2::new(start_x as f32, start_y as f32);
+                
             } else {
                 panic!("No start position ('s') found in the maze!");
             }
 
+            play_sound("./src/sound/mapSelect.mp3");
             self.maze_opt = 2;
             self.state = GameState::Playing;
         }
@@ -149,11 +156,13 @@ impl Game {
             self.maze = load_maze("./maze3.txt");
 
             if let Some((start_x, start_y)) = find_start_position(&self.maze, self.block_size) {
+                self.player.a = - std::f32::consts::PI / 2.0;
                 self.player.pos = Vec2::new(start_x as f32, start_y as f32);
             } else {
                 panic!("No start position ('s') found in the maze!");
             }
 
+            play_sound("./src/sound/mapSelect.mp3");
             self.maze_opt = 3;
             self.state = GameState::Playing;
         }
@@ -167,6 +176,7 @@ impl Game {
         self.framebuffer.clear();
         self.framebuffer.draw_image("./src/img/endScreen.png", 0, 0);
 
+
         self.window
             .update_with_buffer(
                 &self.framebuffer.buffer,
@@ -176,6 +186,7 @@ impl Game {
             .unwrap();
 
         if self.window.is_key_down(Key::Enter) {
+            play_sound("./src/sound/win4.mp3");
             self.state = GameState::WelcomeScreen;
         }
 
@@ -351,10 +362,6 @@ impl Game {
                 }
             }
 
-            // Dibujar al jugador
-            framebuffer.set_current_color(0xFFDDD);
-            framebuffer.point(player_pos_2d.x as usize, player_pos_2d.y as usize);
-
             // Lanzar rayos
             let num_rays = 5;
             for i in 0..num_rays {
@@ -363,26 +370,20 @@ impl Game {
 
                 cast_ray(framebuffer, &maze, &player, a, block_siz2d, view);
             }
+
+             // Dibujar al jugador
+             framebuffer.set_current_color(0xFFDDD);
+             framebuffer.point(player_pos_2d.x as usize, player_pos_2d.y as usize);
         }
 
         if self.window.is_key_down(Key::Escape) {
             return;
         }
 
-        if self.window.is_key_down(Key::Enter) {
-            self.state = GameState::Playing;
-        }
-
-        let selected_maze = match self.maze_opt {
-            1 => "./maze.txt",
-            2 => "./maze2.txt",
-            3 => "./maze3.txt",
-            _ => "./default_maze.txt", // Por si acaso hay un valor fuera del rango esperado
-        };
-
         let current_tile = self.player.get_current_tile(&self.maze, self.block_size);
 
         if let Some('g') = current_tile {
+            play_sound("./src/sound/win2.mp3");
             self.state = GameState::EndScreen;
         }
 
@@ -423,7 +424,7 @@ impl Game {
                 &self.maze,
                 self.block_size,
                 self.block_siz2d,
-                false,
+                true,
             );
         } else {
             render2d(
