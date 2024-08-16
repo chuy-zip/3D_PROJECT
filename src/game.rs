@@ -12,7 +12,8 @@ use std::time::{Duration, Instant};
 pub enum GameState {
     WelcomeScreen,
     Playing,
-    EndScreen, // Otros estados como MainMenu, GameOver, etc.
+    EndScreen,
+    Exiting, // Otros estados como MainMenu, GameOver, etc.
 }
 
 // Estructura principal que representa el juego
@@ -111,7 +112,12 @@ impl Game {
             GameState::Playing => self.render_playing(),
             GameState::WelcomeScreen => self.render_tittle_screen(),
             GameState::EndScreen => self.render_end_screen(),
+            GameState::Exiting => self.render_exit(),
         }
+    }
+    fn render_exit(&mut self){
+        self.framebuffer.clear();
+        self.framebuffer.set_background_color(0xffffff);
     }
 
     fn render_tittle_screen(&mut self) {
@@ -173,7 +179,7 @@ impl Game {
         }
 
         if self.window.is_key_down(Key::Escape) {
-            return;
+            self.state = GameState::Exiting; // Cambia al estado de salir
         }
     }
 
@@ -195,7 +201,7 @@ impl Game {
         }
 
         if self.window.is_key_down(Key::Escape) {
-            return;
+            self.state = GameState::Exiting; // Cambia al estado de salir
         }
 
         // Detener el sonido de caminar
@@ -378,7 +384,7 @@ impl Game {
         }
 
         if self.window.is_key_down(Key::Escape) {
-            return;
+            self.state = GameState::Exiting; // Cambia al estado de salir
         }
 
         let current_tile = self.player.get_current_tile(&self.maze, self.block_size);

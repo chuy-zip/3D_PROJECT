@@ -10,5 +10,10 @@ fn main() {
 
     while game.window.is_open() {
         game.render();
+
+        // Verifica el estado del juego y sale si es necesario
+        if let game::GameState::Exiting = game.state {
+            break;
+        }
     }
 }
